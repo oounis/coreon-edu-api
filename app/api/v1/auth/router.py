@@ -8,8 +8,11 @@ from jose import jwt
 import os, datetime
 
 router = APIRouter()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    bcrypt__ident="2b",
+    deprecated="auto"
+)
 SECRET_KEY = os.getenv("SECRET_KEY", "coreon_secret")
 ALGORITHM = "HS256"
 
