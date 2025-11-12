@@ -13,6 +13,7 @@ pwd_context = CryptContext(
     bcrypt__ident="2b",
     deprecated="auto"
 )
+
 SECRET_KEY = os.getenv("SECRET_KEY", "coreon_secret")
 ALGORITHM = "HS256"
 

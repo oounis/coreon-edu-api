@@ -22,3 +22,18 @@ app.include_router(finance_router, prefix="/api/v1/finance", tags=["finance"])
 @app.get("/health", tags=["health"])
 def health():
     return {"status": "ok"}
+
+# --- JWT Auth routes ---
+from app.api.v1.auth.router import router as auth_router
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+
+# --- JWT Auth routes ---
+from app.api.v1.auth.router import router as auth_router
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+
+# --- Coreon Education domain routers ---
+from app.api.v1.org.router import router as org_router
+from app.api.v1.people.router import router as people_router
+
+app.include_router(org_router, prefix="/api/v1/org", tags=["org"])
+app.include_router(people_router, prefix="/api/v1/people", tags=["people"])
