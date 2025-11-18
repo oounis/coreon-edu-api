@@ -1,24 +1,61 @@
-from typing import Dict
-from threading import Lock
+from __future__ import annotations
+from typing import Dict, Any, Optional
+from collections import defaultdict
+import threading
+import time
 
-# Very small in-process counters (per worker)
+
 class Metrics:
-    _counters: Dict[str, int] = {}
-    _lock = Lock()
+    """
+    Very simple in-memory metrics collector.
 
-    @classmethod
-    def inc(cls, key: str, amt: int = 1):
-        with cls._lock:
-            cls._counters[key] = cls._counters.get(key, 0) + amt
+    - Counters: increment-only values
+    - Timers: list of observed durations (ms)
+    """
 
-    @classmethod
-    def dump_prometheus(cls) -> str:
-        # simple format: each counter as key value
-        with cls._lock:
-            lines = []
-            for k, v in sorted(cls._counters.items()):
-                safe = k.replace(" ", "_").replace("-", "_")
-                lines.append(f"{safe} {v}")
-            return "\n".join(lines) + "\n"
+    def __init__(self):
+        self._counters = defaultdict(int)
+        self._timers = defaultdict(list)
+        self._lock = threading.Lock()
 
-metrics = Metrics
+    def _build_key(self, name: str, labels: Optional[Dict[str, Any]]) -> str:
+        if not labels:
+            return name
+        # stable ordering
+        parts = [f"{k}={labels[k]}" for k in sorted(labels.keys())]
+        return f"{name}|{'|'.join(parts)}"
+
+    def inc(self, name: str, value: int = 1, labels: Optional[Dict[str, Any]] = None) -> None:
+        key = self._build_key(name, labels)
+        with self._lock:
+            self._counters[key] += value
+
+    def observe(self, name: str, value_ms: float, labels: Optional[Dict[str, Any]] = None) -> None:
+        key = self._build_key(name, labels)
+        with self._lock:
+            self._timers[key].append(float(value_ms))
+
+    def snapshot(self) -> Dict[str, Any]:
+        with self._lock:
+            counters = dict(self._counters)
+            timers_summary: Dict[str, Any] = {}
+            for key, values in self._timers.items():
+                if not values:
+                    continue
+                vmin = min(values)
+                vmax = max(values)
+                avg = sum(values) / len(values)
+                timers_summary[key] = {
+                    "count": len(values),
+                    "min_ms": vmin,
+                    "max_ms": vmax,
+                    "avg_ms": avg,
+                }
+        return {
+            "counters": counters,
+            "timers": timers_summary,
+            "generated_at": time.time(),
+        }
+
+
+metrics = Metrics()

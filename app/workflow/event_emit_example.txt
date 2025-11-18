@@ -1,0 +1,10 @@
+from app.events import event_bus
+from app.events.types import WorkflowEvents
+
+event_bus.publish(WorkflowEvents.APPROVAL_PENDING, {
+    "user_id": approver_id,
+    "school_id": school_id,
+    "event": WorkflowEvents.APPROVAL_PENDING,
+    "category": "workflow",
+    "data": {"request_id": request_id}
+})

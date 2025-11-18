@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Response
+from fastapi import APIRouter
 from app.monitoring.metrics import metrics
 
-router = APIRouter()
+router = APIRouter(prefix="/metrics", tags=["Metrics"])
 
-@router.get("/metrics")
-def metrics_text():
-    # text/plain for Prometheus scrapes
-    body = metrics.dump_prometheus()
-    return Response(content=body, media_type="text/plain")
+@router.get("/debug")
+def get_metrics_debug():
+    """
+    Debug endpoint to view in-memory metrics snapshot.
+    Not for production public exposure.
+    """
+    return metrics.snapshot()
